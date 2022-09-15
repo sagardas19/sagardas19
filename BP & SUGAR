@@ -1,0 +1,138 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns 
+from scipy.stats import norm 
+
+
+
+dataset=pd.read_csv('C:/Users/sagar/Desktop/Blood Pressure Identiification/Cleaned Data (CSV).csv')
+#dateset2
+
+#Encoding the Ordinal Category Values 
+data_mapping = {
+ "Gender": {"Male":1,"Female":0}, 
+ "Family History":{"No":0,"Maybe":1,"Yes":2},
+ "Meals per Day":{"3-4 Meals":1,"5-6 Meals":2,"More than 6":3},
+ "Water per Day":{"upto 1-2 ltrs":1,
+                  "upto 2-3 ltrs":2,
+                  "upto 3-4 ltrs":3,
+                  "more than 4 ltrs":4},
+ "Exercise":{"Less than twice":1,
+             "Two to three times":2,
+             "Three to four times":3,
+             "More than 4 times":4},
+ "Fast Food":{"Less than twice":1,
+             "Two to three times":2,
+             "Three to four times":3,
+             "More than 4 times":4},
+ "Sleep":{"5-6hrs":1,
+          "6-7hrs":2,
+          "7-8hrs":3,
+          "More than 8hrs":4},
+ "Sleeping Issues":{"Yes":1,"No":0},
+ "Smoking Habits":{"Non-Smoker":0,
+                  "Light-Smoker":1,
+                  "Heavy-Smoker":2},
+ "Alcohol":{"Yes":1,"No":0},
+ "Stress Level":{"Very Low":1,
+                 "Low":2,
+                 "Moderate":3,
+                 "High":4,
+                 "Very High":5},
+     "Health":{"Yes":1,"No":0}
+}
+   
+dataset.replace(data_mapping,inplace=True)
+
+#Correlation Plot to Identify dependent Variable
+plt.figure(figsize=(15,15)) 
+subset =dataset.iloc[:,0:15]
+corrplot = subset.corr()
+sns.heatmap(corrplot, cmap ="YlGnBu", annot=True, linewidths = 0.1)
+plt.show()
+
+
+#Dependent Variable
+Y_Diabetes = dataset.iloc[:, 16].values
+Y_BP = dataset.iloc[:, 15].values
+
+#Independent Variable
+X = dataset.iloc[:, 0:13].values
+
+length=len(dataset)
+features = dataset.shape[1]-1
+
+print ("There are "+ str(len(dataset))+" cases in this")
+print ("There are {}".format(features)+" features in this dataset")
+
+#Feature Scaling
+from sklearn import preprocessing
+Scaler = preprocessing.StandardScaler()
+X = Scaler.fit_transform(X)
+
+#Encode the dependent Variable 
+from sklearn.preprocessing import LabelEncoder
+labelencoder_Y = LabelEncoder()
+Y_Diabetes = labelencoder_Y.fit_transform(Y_Diabetes)
+Y_BP = labelencoder_Y.fit_transform(Y_BP)
+
+
+#Splitting into Train & Test
+#Switch the Dependent Variable between Y_Diabetes & Y_BP to know the different Predictions
+from sklearn.model_selection import train_test_split
+X_train, X_test, Y_train, Y_test= train_test_split(X, Y_Diabetes, test_size=0.30,random_state=0)
+
+#X_train, X_test, Y_train, Y_test = train_test_split(X, Y_BP, test_size=0.30, random_state=0)
+
+from sklearn.linear_model import LogisticRegression
+classifier=LogisticRegression(random_state=0)
+classifier.fit(X_train,Y_train)
+Y_pred_LR = classifier.predict(X_test)
+                        
+from sklearn.naive_bayes import GaussianNB
+classifier=GaussianNB()
+classifier.fit(X_train, Y_train)
+Y_pred_NB=classifier.predict(X_test)
+
+from sklearn.svm import SVC
+classifier = SVC(kernel = 'rbf', random_state = 0)
+classifier.fit(X_train, Y_train)
+Y_pred_SVC=classifier.predict(X_test)
+
+from sklearn.ensemble import RandomForestClassifier
+classifier = RandomForestClassifier()
+classifier.fit(X_train, Y_train)
+Y_pred_RFR = classifier.predict(X_test)
+
+from sklearn.ensemble import AdaBoostClassifier
+classifier = AdaBoostClassifier(random_state=0)
+classifier.fit(X_train,Y_train)
+Y_pred_ABC =classifier.predict(X_test)
+#Adaptive Boosting
+
+from sklearn.ensemble import GradientBoostingClassifier
+classifier= GradientBoostingClassifier(random_state=0)
+classifier.fit(X_train,Y_train)
+Y_pred_GBC =classifier.predict(X_test)
+
+from sklearn.svm import LinearSVC
+classifier = LinearSVC(random_state = 0)
+classifier.fit(X_train, Y_train)
+Y_pred_LinearSVC=classifier.predict(X_test)
+
+
+
+from sklearn import metrics 
+print("Logistic Regression accuracy(in %):", metrics.accuracy_score(Y_test, Y_pred_LR)*100)
+
+print("Gaussian Naive Bayes model accuracy(in %): ", metrics.accuracy_score(Y_test, Y_pred_NB)*100)
+print("SVM model accuracy(in %):", metrics.accuracy_score(Y_test, Y_pred_SVC)*100)
+
+print("Rain Forest model accuracy(in %):", metrics.accuracy_score(Y_test, Y_pred_RFR)*100)
+
+print("ADaBoost model accuracy(in %):", metrics.accuracy_score(Y_test, Y_pred_ABC)*100)
+
+print("XGBoost model accuracy(in %):", metrics.accuracy_score(Y_test, Y_pred_GBC)*100)
+
+print("LinearSVC model accuracy(in %):", metrics.accuracy_score(Y_test, Y_pred_LinearSVC)*100)
